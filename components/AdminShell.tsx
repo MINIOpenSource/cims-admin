@@ -38,12 +38,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
     const isExcluded = SHELL_EXCLUDED_PATHS.some(p => pathname.startsWith(p));
 
-    // /auth 页面和加载中不显示 shell
+    // /auth 页面不显示 shell
     if (isExcluded) {
         return <>{children}</>;
     }
 
-    // 正在探测权限
+    // 正在探测权限或未初始化
     if (loading) {
         return (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -52,7 +52,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         );
     }
 
-    // 未认证（通常不会到这里，auth-context 会跳转）
+    // 未认证
     if (!isAuthenticated) {
         return null;
     }

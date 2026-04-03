@@ -8,24 +8,23 @@
  */
 
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { setToken } from "@/lib/api";
+import { setToken, getMainSiteUrl } from "@/lib/api";
 import { Spinner } from "@fluentui/react-components";
 
 export default function AuthTransferPage() {
-    const router = useRouter();
-
     useEffect(() => {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             const token = params.get("token");
             if (token) {
                 setToken(token);
+                // 使用硬跳转避免 Next.js 路由复用 Layout 导致 AuthProvider 不执行探测
+                window.location.replace("/");
+            } else {
+                window.location.replace(getMainSiteUrl());
             }
-            // 跳转到管理面板首页（replace 防止返回循环）
-            router.replace("/");
         }
-    }, [router]);
+    }, []);
 
     return (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>

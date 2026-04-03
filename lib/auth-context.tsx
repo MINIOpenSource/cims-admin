@@ -27,24 +27,37 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setTokenState] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [initialized, setInitialized] = useState(false);
 
     // 初始化：从 localStorage 读取 token 并探测权限
     useEffect(() => {
+        // 如果是 /auth 页面，直接让出控制权，由该页面完成 token 写入与刷新跳转
+        if (typeof window !== "undefined" && (window.location.pathname === "/auth" || window.location.pathname === "/auth/")) {
+            setLoading(false);
+            setInitialized(true);
+            return;
+        }
+
         const stored = getToken();
         if (!stored) {
             // 无 token，直接跳转主站
+            console.log("No token, redirecting to main site...");
             window.location.href = getMainSiteUrl();
             return;
         }
         setTokenState(stored);
 
+        console.log("Probing admin API...");
         adminApi.probe()
             .then(() => {
                 // 权限验证通过
+                console.log("Probe success");
                 setLoading(false);
+                setInitialized(true);
             })
-            .catch(() => {
-                // 无超管权限，跳回主站
+            .catch((err) => {
+                // 无超管权限或 Token 失效，跳回主站
+                console.error("Probe failed:", err);
                 clearToken();
                 window.location.href = getMainSiteUrl();
             });
@@ -56,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.href = getMainSiteUrl();
     }, []);
 
-    const isAuthenticated = !!token && !loading;
+    const isAuthenticated = !!token && !loading && initialized;
 
     return (
         <AuthContext.Provider value={{
